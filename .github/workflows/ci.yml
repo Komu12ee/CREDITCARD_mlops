@@ -2,13 +2,15 @@ name: CI/CD MLOps Pipeline (DSMP Project)
 
 on:
   push:
-    branches: [ "main", "dev" ] # Runs automatically on push to these branches
+    branches: [ "main", "dev" ]
   pull_request:
     branches: [ "main" ]
   workflow_dispatch: # Allows manual triggering from the GitHub Actions tab
 
 permissions:
   contents: read # Required to checkout the code
+  # CRITICAL OIDC CHANGE: Granting permission to request the ID token
+  id-token: write 
 
 jobs:
   #####################################################################
@@ -18,39 +20,37 @@ jobs:
     name: Continuous Integration Checks
     runs-on: ubuntu-latest
     steps:
-          - name: Checkout Code with Custom Token (if needed)
+      # FIX: Corrected indentation for the first step
+      - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          # Use your custom token stored as a secret in GitHub
-          token: ${{ secrets.anushka_mlops }}
+          # Using the custom token, as you preferred (remember the security risks!)
+          token: ${{ secrets.anushka_mlops }} 
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11' # Recommended standard for ML projects
+          python-version: '3.11' 
 
       - name: Install dependencies (Pipelines/Testing)
         run: |
-          # Example: install required Python packages
           python -m pip install --upgrade pip
-          pip install -r requirements.txt || true # Use your actual requirements file
+          pip install -r requirements.txt || true
 
       - name: Lint code
         run: echo "Linting repository: Running Flake8/Black/etc. checks..."
-        # Replace echo with: pip install flake8 && flake8 . --max-complexity=10 --max-line-length=120
 
       - name: Run unit and component tests
         run: echo "Running unit tests: Running pytest..."
-        # Replace echo with: pytest tests/
 
   #####################################################################
-  # JOB 2: Build & Tag Docker Image (MOCKED AWS)
+  # JOB 2: Build & Tag Docker Image (OIDC IMPLEMENTED)
   #####################################################################
   build-and-tag-image:
-    name: Build & Tag Docker Image
-    needs: integration # Only runs if CI checks pass
+    name: Build & Tag Docker Image (OIDC Auth)
+    needs: integration 
     runs-on: ubuntu-latest
     
-    # Define outputs so the next job can consume the image URI
     outputs:
       image_uri: ${{ steps.build-image.outputs.image_uri }} 
 
@@ -58,67 +58,73 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      # OIDC STEP: Configure AWS credentials using an IAM Role ARN (temporary credentials)
+      - name: Configure AWS Credentials with OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          # The IAM Role ARN that GitHub is trusted to assume (replace with your AWS ID)
+          role-to-assume: arn:aws:iam::123456789012:role/github-oidc-role 
+          aws-region: ${{ secrets.AWS_REGION }} # Still need to get region from secret
+          # No access keys required! This is the security improvement.
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+        # This step automatically uses the temporary OIDC credentials from the previous step!
+
       - name: Set Environment Variables
-        # This step defines variables to be used throughout the job
         id: env_setup
         run: |
-          # MLOps Best Practice: Tag image with short commit hash for reproducibility
-          # If you want the full SHA: echo "IMAGE_TAG=${{ github.sha }}" >> $GITHUB_ENV
+          # Use the commit SHA for a unique, reproducible tag
           echo "IMAGE_TAG=${{ github.sha }}" >> $GITHUB_ENV 
-          
-          # MOCK: Replace ECR registry with a local placeholder for testing
-          echo "ECR_REGISTRY=mocked-registry.docker.io" >> $GITHUB_ENV
-          echo "ECR_REPOSITORY=dsmp-ml-model" >> $GITHUB_ENV
+          echo "ECR_REPOSITORY=${{ secrets.ECR_REPOSITORY_NAME }}" >> $GITHUB_ENV
+          # Use the ECR registry output for the full path
+          echo "ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}" >> $GITHUB_ENV
 
-      # MOCK: We skip the 'Configure AWS credentials' and 'Login to Amazon ECR' steps
-
-      - name: Build and Tag Image Locally
+      - name: Build, Tag, and Push Image to Amazon ECR
         id: build-image
+        env:
+          IMAGE_TAG: ${{ env.IMAGE_TAG }}
+          ECR_REGISTRY: ${{ env.ECR_REGISTRY }}
+          ECR_REPOSITORY: ${{ env.ECR_REPOSITORY }}
         run: |
-          # Use defined environment variables for tagging
-          IMAGE_TAG="${{ env.IMAGE_TAG }}"
-          ECR_REGISTRY="${{ env.ECR_REGISTRY }}"
-          ECR_REPOSITORY="${{ env.ECR_REPOSITORY }}"
-          
           FULL_IMAGE_URI="$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
-          echo "--- MOCK: Docker build started for $FULL_IMAGE_URI ---"
+          echo "--- Docker build started for $FULL_IMAGE_URI ---"
           docker build -t $FULL_IMAGE_URI .
-          echo "--- MOCK: Docker build successful! ---"
           
-          # Set the output variable using the modern syntax
+          echo "--- Pushing image to ECR... ---"
+          docker push $FULL_IMAGE_URI
+          
+          # Set the output for the next job (CD)
           echo "image_uri=$FULL_IMAGE_URI" >> $GITHUB_OUTPUT 
-          
-          # MOCK: Skip 'docker push' as we don't have AWS credentials
+          echo "--- Push to ECR successful! ---"
 
   #####################################################################
   # JOB 3: Continuous Deployment (CD) - Deploy to Runner (MOCKED)
   #####################################################################
   continuous-deployment:
-    name: Continuous Deployment (Self-Hosted Mock)
-    runs-on: self-hosted # This job must run on a machine you manage
-    needs: build-and-tag-image # Only runs if build job succeeds
+    name: Continuous Deployment (Self-Hosted Script)
+    runs-on: self-hosted
+    needs: build-and-tag-image 
     
     steps:
-      - name: Pull and Run the Image (Mocked)
+      - name: Deploy Container on Self-Hosted Runner
         env:
-          # This is the crucial part: referencing the output of the previous job
+          # Referencing the image URI from the previous job using the new output syntax
           IMAGE_URI: ${{ needs.build-and-tag-image.outputs.image_uri }} 
           
         run: |
-          # --- MOCK: Instead of pulling from ECR, we simulate the pull/run.
-          echo "--- MOCK: Deploying container based on URI: $IMAGE_URI ---"
+          echo "--- Starting deployment for image: $IMAGE_URI ---"
           
-          # In a REAL scenario, this command would be:
-          # docker pull $IMAGE_URI 
+          # 1. Pull the newly pushed image from ECR (requires self-hosted runner to have AWS access)
+          # Note: The self-hosted runner needs 'aws configure' or instance profile role to pull from ECR.
+          docker pull $IMAGE_URI
 
-          # We can verify the tag is correct
-          echo "Verified Image Tag: $(echo $IMAGE_URI | cut -d':' -f2)"
-          
-          # Delete Previous Container
+          # 2. Delete Previous Container
           docker rm -f creditcard || true
 
-          # Run Docker Image to serve users
+          # 3. Run New Container
           docker run -d -p 8080:8080 --ipc="host" --name=creditcard $IMAGE_URI
 
-          echo "--- MOCK: Deployment to self-hosted runner successful on port 8080! ---"
+          echo "--- Deployment complete! Service running on port 8080. ---"
