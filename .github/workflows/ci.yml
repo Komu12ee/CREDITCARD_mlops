@@ -20,7 +20,6 @@ jobs:
     name: Continuous Integration Checks
     runs-on: ubuntu-latest
     steps:
-      # FIX: Corrected indentation for the first step
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
@@ -51,6 +50,7 @@ jobs:
     needs: integration 
     runs-on: ubuntu-latest
     
+    # Corrected Indentation/Structure for outputs and steps
     outputs:
       image_uri: ${{ steps.build-image.outputs.image_uri }} 
 
