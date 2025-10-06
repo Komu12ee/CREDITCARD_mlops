@@ -1,15 +1,16 @@
-name: CI/CD MLOps Pipeline (DSMP Project)
+name: CI/CD MLOps Pipeline (Simplified)
 
+# 1. Triggers: Runs automatically on push, pull request, or manually
 on:
   push:
     branches: [ "main", "dev" ]
   pull_request:
     branches: [ "main" ]
-  workflow_dispatch: # Allows manual triggering from the GitHub Actions tab
+  workflow_dispatch:
 
 permissions:
-  contents: read # Required to checkout the code
-  # CRITICAL OIDC CHANGE: Granting permission to request the ID token
+  contents: read 
+  # CRITICAL: Retained for secure OIDC authentication with AWS
   id-token: write 
 
 jobs:
@@ -17,40 +18,39 @@ jobs:
   # JOB 1: Continuous Integration (CI) - Code Quality & Testing
   #####################################################################
   integration:
-    name: Continuous Integration Checks
+    name: Core CI Checks
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
+        # We rely on the default GITHUB_TOKEN, which is simpler and more secure
         uses: actions/checkout@v4
-        with:
-          # Using the custom token, as you preferred (remember the security risks!)
-          token: ${{ secrets.anushka_mlops }} 
+        # Removed the 'with: token: anushka_mlops' line for simplicity
 
-      - name: Setup Python
+      - name: Setup Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: '3.11' 
 
-      - name: Install dependencies (Pipelines/Testing)
+      - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt || true
+          pip install -r requirements.txt || true # Installs all necessary DSMP/ML dependencies
 
-      - name: Lint code
-        run: echo "Linting repository: Running Flake8/Black/etc. checks..."
-
-      - name: Run unit and component tests
-        run: echo "Running unit tests: Running pytest..."
+      - name: Run Code Checks
+        run: |
+          echo "Running Linting and Unit Tests..."
+          # In a real scenario, this would be 'pytest' or 'flake8'
 
   #####################################################################
-  # JOB 2: Build & Tag Docker Image (OIDC IMPLEMENTED)
+  # JOB 2: Build & Push Docker Image (Secure Cloud Registry)
+  # This is the Continuous Delivery (CD) artifact creation phase.
   #####################################################################
-  build-and-tag-image:
-    name: Build & Tag Docker Image (OIDC Auth)
-    needs: integration 
+  build-and-push-image:
+    name: Build & Push Image to ECR
+    needs: integration # Requires CI checks to pass first
     runs-on: ubuntu-latest
     
-    # Corrected Indentation/Structure for outputs and steps
+    # Define outputs so deployment can retrieve the final image URI
     outputs:
       image_uri: ${{ steps.build-image.outputs.image_uri }} 
 
@@ -58,73 +58,39 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # OIDC STEP: Configure AWS credentials using an IAM Role ARN (temporary credentials)
+      # 1. OIDC AUTH: Securely get temporary AWS credentials
       - name: Configure AWS Credentials with OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          # The IAM Role ARN that GitHub is trusted to assume (replace with your AWS ID)
+          # IMPORTANT: Replace '123456789012' with your actual AWS Account ID
           role-to-assume: arn:aws:iam::123456789012:role/github-oidc-role 
-          aws-region: ${{ secrets.AWS_REGION }} # Still need to get region from secret
-          # No access keys required! This is the security improvement.
+          aws-region: ${{ secrets.AWS_REGION }}
 
+      # 2. ECR Login: Use the temporary credentials to log in
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
-        # This step automatically uses the temporary OIDC credentials from the previous step!
 
-      - name: Set Environment Variables
-        id: env_setup
-        run: |
-          # Use the commit SHA for a unique, reproducible tag
-          echo "IMAGE_TAG=${{ github.sha }}" >> $GITHUB_ENV 
-          echo "ECR_REPOSITORY=${{ secrets.ECR_REPOSITORY_NAME }}" >> $GITHUB_ENV
-          # Use the ECR registry output for the full path
-          echo "ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}" >> $GITHUB_ENV
-
+      # 3. Build & Push
       - name: Build, Tag, and Push Image to Amazon ECR
         id: build-image
         env:
-          IMAGE_TAG: ${{ env.IMAGE_TAG }}
-          ECR_REGISTRY: ${{ env.ECR_REGISTRY }}
-          ECR_REPOSITORY: ${{ env.ECR_REPOSITORY }}
+          # Uses the unique commit hash for reproducible tagging
+          IMAGE_TAG: ${{ github.sha }} 
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY_NAME }}
         run: |
           FULL_IMAGE_URI="$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
-          echo "--- Docker build started for $FULL_IMAGE_URI ---"
+          echo "--- Starting Docker build for $FULL_IMAGE_URI ---"
           docker build -t $FULL_IMAGE_URI .
           
           echo "--- Pushing image to ECR... ---"
           docker push $FULL_IMAGE_URI
           
-          # Set the output for the next job (CD)
+          # Pass the final image URI to the next (removed) deployment stage
           echo "image_uri=$FULL_IMAGE_URI" >> $GITHUB_OUTPUT 
-          echo "--- Push to ECR successful! ---"
 
-  #####################################################################
-  # JOB 3: Continuous Deployment (CD) - Deploy to Runner (MOCKED)
-  #####################################################################
-  continuous-deployment:
-    name: Continuous Deployment (Self-Hosted Script)
-    runs-on: self-hosted
-    needs: build-and-tag-image 
-    
-    steps:
-      - name: Deploy Container on Self-Hosted Runner
-        env:
-          # Referencing the image URI from the previous job using the new output syntax
-          IMAGE_URI: ${{ needs.build-and-tag-image.outputs.image_uri }} 
-          
-        run: |
-          echo "--- Starting deployment for image: $IMAGE_URI ---"
-          
-          # 1. Pull the newly pushed image from ECR (requires self-hosted runner to have AWS access)
-          # Note: The self-hosted runner needs 'aws configure' or instance profile role to pull from ECR.
-          docker pull $IMAGE_URI
-
-          # 2. Delete Previous Container
-          docker rm -f creditcard || true
-
-          # 3. Run New Container
-          docker run -d -p 8080:8080 --ipc="host" --name=creditcard $IMAGE_URI
-
-          echo "--- Deployment complete! Service running on port 8080. ---"
+  # Removed: The complex and fragile 'continuous-deployment' job. 
+  # The artifact is now securely stored in ECR, ready for a dedicated
+  # orchestration service (like ECS, EKS, or SageMaker) to deploy it.
