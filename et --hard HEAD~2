@@ -1,0 +1,161 @@
+[33mcommit 89a0c12ff016aeb065cb8c6bbeebc6f05d956041[m[33m ([m[1;36mHEAD -> [m[1;32mmain[m[33m)[m
+Author: komu <sahukomendra721@gmail.com>
+Date:   Wed Oct 8 16:08:31 2025 +0530
+
+     added all credential till deployment
+
+[33mcommit f2a55cae0a97dd2872f41442e67dcc49fb4f3502[m
+Author: komu <sahukomendra721@gmail.com>
+Date:   Wed Oct 8 15:44:32 2025 +0530
+
+    in ci.yml file add till deployment credential
+
+[33mcommit 85054d87674cab26d0a152664e71ec608b35fcc8[m[33m ([m[1;31morigin/main[m[33m)[m
+Author: komu <sahukomendra721@gmail.com>
+Date:   Wed Oct 8 14:21:24 2025 +0530
+
+    added the right username and password
+
+[33mcommit db48a13698d5291643d66e8bdded5117a47b7e7f[m
+Author: komu <sahukomendra721@gmail.com>
+Date:   Wed Oct 8 13:32:18 2025 +0530
+
+     added docker credential
+
+[33mcommit f76845e06c9332bdaab714abb8ad847bbcc20ac5[m
+Author: komu <sahukomendra721@gmail.com>
+Date:   Wed Oct 8 13:28:02 2025 +0530
+
+     after connecting the azure and github
+
+[33mcommit 719e49c7a70730d36e54c9e4c7cd8a2c84ba3605[m
+Author: komu <sahukomendra721@gmail.com>
+Date:   Mon Oct 6 18:35:31 2025 +0530
+
+    after corrected on line 17 attempt 3 .yml code
+
+[33mcommit 051db2fa00054a2350086936cb64008c61d31079[m
+Author: komu <sahukomendra721@gmail.com>
+Date:   Mon Oct 6 18:33:00 2025 +0530
+
+    after corrected on line 17 attempt 2 .yml code
+
+[33mcommit 69ec72c141711d78ad628222c29ea90ffeb09720[m
+Author: komu <sahukomendra721@gmail.com>
+Date:   Mon Oct 6 18:30:38 2025 +0530
+
+    after corrected on line 17 .yml code
+
+[33mcommit 26bd3b3982b4b3bf804693abf0f5af1d98f10901[m
+Author: komu <sahukomendra721@gmail.com>
+Date:   Mon Oct 6 18:19:54 2025 +0530
+
+    gemini .yml code
+
+[33mcommit 2a7adee01800a713df28ffcac2bc7e4382d887b9[m
+Author: komu <sahukomendra721@gmail.com>
+Date:   Mon Oct 6 17:38:19 2025 +0530
+
+    second attempt to run ci.yaml file
+
+[33mcommit 0cd5d025f9261902ce9e51bf744ba7da7d383237[m
+Author: Pranjal Yadav <godricglow@gmail.com>
+Date:   Wed Dec 27 21:46:57 2023 +0530
+
+    Trying with env vars
+
+[33mcommit 3c5b410f2f1cf6da6a1124648c085ec08f298645[m
+Author: Pranjal Yadav <godricglow@gmail.com>
+Date:   Wed Dec 27 21:41:59 2023 +0530
+
+    Reading model from S3 in dockerfile build
+
+[33mcommit af002c08bf008bbc304e6f7b441e44ac746f0bd2[m
+Author: Pranjal Yadav <godricglow@gmail.com>
+Date:   Mon Dec 25 19:57:50 2023 +0530
+
+    CHanging dockerfile to min, updating reqs, moving to ecr login v2
+
+[33mcommit 024fe2555a66b5a09f078916ed5c90a7f61d8c5f[m
+Author: Pranjal Yadav <godricglow@gmail.com>
+Date:   Mon Dec 25 19:11:38 2023 +0530
+
+    changing IPC
+
+[33mcommit 2a81460e0a61faf5d248ee5a1d18f4532c2258bb[m
+Author: Pranjal Yadav <godricglow@gmail.com>
+Date:   Mon Dec 25 18:10:31 2023 +0530
+
+    V1 login with self-hosted
+
+[33mcommit cbd2921e1ceef6ad925fc6f01c8a5fe6395b5359[m
+Author: Pranjal Yadav <godricglow@gmail.com>
+Date:   Sat Dec 23 21:41:01 2023 +0530
+
+    running on ubuntu latest
+
+[33mcommit 09f5cc1450e7de6ed3d14ee91544df72cea1ed64[m
+Author: Pranjal Yadav <godricglow@gmail.com>
+Date:   Sat Dec 23 18:31:00 2023 +0530
+
+    moving to self-hosted
+
+[33mcommit 482d129942dec6b2cf606389e9d37373135a31ad[m
+Author: Pranjal Yadav <godricglow@gmail.com>
+Date:   Sat Dec 23 18:15:34 2023 +0530
+
+    changing to 8080
+
+[33mcommit f6a4173a8f4df9de9b1afe8c4d5c4cf1ac17ca43[m
+Author: Pranjal Yadav <godricglow@gmail.com>
+Date:   Sat Dec 23 18:02:10 2023 +0530
+
+    removing sudo
+
+[33mcommit 26767a1f239295668c3b05f5355ce46febe4670e[m
+Author: Pranjal Yadav <godricglow@gmail.com>
+Date:   Sat Dec 23 17:58:50 2023 +0530
+
+    changing CD to in sequence
+
+[33mcommit 67dcd1e2305ae494d7a25faeb51673c2cf76dc4d[m
+Author: Pranjal Yadav <godricglow@gmail.com>
+Date:   Sat Dec 23 17:56:40 2023 +0530
+
+    trying without self-hosted runner
+
+[33mcommit 9a1ceb77d60957d58a534841f80f317b2d56bcf2[m
+Author: Pranjal Yadav <godricglow@gmail.com>
+Date:   Sat Dec 23 17:50:14 2023 +0530
+
+    Adding env vars to pull step to avoid password issue
+
+[33mcommit 93bce615119f5fe0a557eb6e5b874f6286199cdc[m
+Author: Pranjal Yadav <godricglow@gmail.com>
+Date:   Sat Dec 23 17:23:12 2023 +0530
+
+    Upgrading versions of aws actions
+
+[33mcommit bfe2a57ecda8524675998ce149c360816ec9ac4b[m
+Author: Pranjal Yadav <godricglow@gmail.com>
+Date:   Sat Dec 23 16:54:23 2023 +0530
+
+    moving cd to ci
+
+[33mcommit 3a0ef8e33551afd2bcd4531c34e61abefda93d24[m
+Author: Pranjal Yadav <godricglow@gmail.com>
+Date:   Sat Dec 23 16:10:06 2023 +0530
+
+    Remove S3 file load in docker, update CI stage name
+
+[33mcommit 881a2bab8ad7d689413b056a92a4784a48824cd9[m
+Author: Pranjal Yadav <godricglow@gmail.com>
+Date:   Sat Dec 23 15:41:07 2023 +0530
+
+    fixing error in ci
+
+[33mcommit a25f939b70c5bf6c5707bf89614bfce8e5a6b29e[m
+Author: Pranjal Yadav <godricglow@gmail.com>
+Date:   Sat Dec 23 15:40:15 2023 +0530
+
+    adding ci-cd yamls and dockerfile
