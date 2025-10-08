@@ -28,13 +28,13 @@ jobs:
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.komendra }}
-          password: ${{ secrets.komu1004@ }}
+          username: komendra
+          password: komu1004@
 
       - name: Build Docker Image
         run: |
-          docker build -t ${{ secrets.komendra }}/creditcard:latest .
+          docker build -t komendra/creditcard:latest .
 
       - name: Push Docker Image
         run: |
-          docker push ${{ secrets.komendra }}/creditcard:latest
+          docker push komendra/creditcard:latest
